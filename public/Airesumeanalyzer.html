@@ -126,95 +126,93 @@
 
     </div>
     <script>
-        const fileInput = document.getElementById("file");
-        const fileInfo = document.getElementById("fileInfo");
-        const status = document.getElementById("status");
-        const downloadBox = document.getElementById("download");
-        const downloadLink = document.getElementById("downloadLink");
-        fileInput.addEventListener("change", () => {
-            if (fileInput.files.length > 0) {
-                fileInfo.innerText =
-                    "Selected: " + fileInput.files[0].name;
-            } else {
-                fileInfo.innerText = "No file selected";
-            }
-        });
-        function showToast(message, type = "success") {
-            const toast = document.createElement("div");
-            toast.innerText = message;
-            toast.style.position = "fixed";
-            toast.style.bottom = "20px";
-            toast.style.right = "20px";
-            toast.style.padding = "12px 18px";
-            toast.style.borderRadius = "8px";
-            toast.style.color = "#fff";
-            toast.style.fontSize = "14px";
-            toast.style.zIndex = "9999";
-            toast.style.boxShadow = "0 0 10px rgba(0,0,0,0.3)";
-            toast.style.transition = "0.3s";
-            if (type === "success") {
-                toast.style.background = "#22c55e";
-            } else {
-                toast.style.background = "#ef4444";
-            }
-            document.body.appendChild(toast);
-            setTimeout(() => {
-                toast.style.opacity = "0";
-                toast.style.transform = "translateY(10px)";
-            }, 2500);
-            setTimeout(() => {
-                toast.remove();
-            }, 3000);
-        }
         async function submitResume() {
+
             const file = fileInput.files[0];
-            const content =
-                document.getElementById("content").value;
+            const content = document.getElementById("content").value;
             if (!file) {
+
                 showToast(
                     "Please upload a PDF file",
                     "error"
                 );
+
                 return;
+
             }
-            status.innerText = "Processing resume...";
-            const formData = new FormData();
-            formData.append("file", file);
-            formData.append("content", content);
+
+            status.innerText =
+                "Processing resume...";
+
+            const formData =
+                new FormData();
+
+            formData.append(
+                "file",
+                file
+            );
+
+            formData.append(
+                "content",
+                content
+            );
+
             try {
                 const res = await fetch(
+
                     "/api/airesumeanalyzer/check",
+
                     {
                         method: "POST",
                         body: formData
                     }
+
                 );
-                const data = await res.json();
-                console.log(data);
-                if (!data.status || !data.path) {
+
+                if (!res.ok) {
+
                     throw new Error(
-                        data.errors?.[0] ||
-                        "PDF generation failed"
+                        "Failed to generate resume"
                     );
+
                 }
-                const pdfResponse = await fetch(data.path);
-                const blob = await pdfResponse.blob();
+                const blob =
+                    await res.blob();
+
                 const blobUrl =
-                    window.URL.createObjectURL(blob);
-                const link =
-                    document.createElement("a");
+                    window.URL.createObjectURL(
+                        blob
+                    );
+                const link =document.createElement("a");
+
                 link.href = blobUrl;
-                link.download = "updated_resume.pdf";
-                document.body.appendChild(link);
+
+                link.download =
+                    "updated_resume.pdf";
+
+                document.body.appendChild(
+                    link
+                );
+
                 link.click();
-                document.body.removeChild(link);
-                window.URL.revokeObjectURL(blobUrl);
+
+                document.body.removeChild(
+                    link
+                );
+
+                window.URL.revokeObjectURL(
+                    blobUrl
+                );
+
                 status.innerText = "";
+
                 showToast(
                     "Resume downloaded successfully!",
                     "success"
                 );
+
             } catch (err) {
+
                 console.error(err);
                 status.innerText = "";
                 showToast(
