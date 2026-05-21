@@ -1,0 +1,232 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>AI Resume Analyzer</title>
+
+    <style>
+        body {
+            margin: 0;
+            font-family: Arial, sans-serif;
+            background: linear-gradient(135deg, #0f172a, #1e293b);
+            color: white;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+        }
+
+        .container {
+            width: 420px;
+            background: rgba(255, 255, 255, 0.05);
+            padding: 25px;
+            border-radius: 16px;
+            box-shadow: 0 0 20px rgba(0, 0, 0, 0.4);
+            backdrop-filter: blur(10px);
+        }
+
+        h2 {
+            text-align: center;
+            margin-bottom: 20px;
+            color: #60a5fa;
+        }
+
+        label {
+            font-size: 14px;
+            margin-top: 10px;
+            display: block;
+            color: #cbd5e1;
+        }
+
+        input,
+        textarea {
+            width: 100%;
+            padding: 10px;
+            margin-top: 6px;
+            border-radius: 8px;
+            border: none;
+            outline: none;
+            background: #0f172a;
+            color: white;
+        }
+
+        textarea {
+            height: 100px;
+            resize: none;
+        }
+
+        .btn {
+            width: 100%;
+            margin-top: 15px;
+            padding: 12px;
+            background: #3b82f6;
+            border: none;
+            color: white;
+            font-size: 15px;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: 0.3s;
+        }
+
+        .btn:hover {
+            background: #2563eb;
+        }
+
+        .file-info {
+            margin-top: 8px;
+            font-size: 12px;
+            color: #94a3b8;
+        }
+
+        .status {
+            margin-top: 10px;
+            font-size: 13px;
+            text-align: center;
+            color: #34d399;
+        }
+
+        .download {
+            display: none;
+            margin-top: 10px;
+            text-align: center;
+        }
+
+        .download a {
+            color: #22c55e;
+            text-decoration: none;
+            font-weight: bold;
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="container">
+
+        <h2>AI Resume Analyzer</h2>
+
+        <label>Upload Resume (PDF)</label>
+        <input type="file" id="file" accept="application/pdf" />
+        <div class="file-info" id="fileInfo">No file selected</div>
+
+        <label>Extra Instructions (optional)</label>
+        <textarea id="content" placeholder="Add or update content..."></textarea>
+
+        <button class="btn" onclick="submitResume()">Analyze & Generate PDF</button>
+
+        <div class="status" id="status"></div>
+
+        <div class="download" id="download">
+            <a id="downloadLink" href="#" download>
+                Download Updated Resume
+            </a>
+        </div>
+
+    </div>
+    <script>
+        const fileInput = document.getElementById("file");
+        const fileInfo = document.getElementById("fileInfo");
+        const status = document.getElementById("status");
+        const downloadBox = document.getElementById("download");
+        const downloadLink = document.getElementById("downloadLink");
+        fileInput.addEventListener("change", () => {
+            if (fileInput.files.length > 0) {
+                fileInfo.innerText =
+                    "Selected: " + fileInput.files[0].name;
+            } else {
+                fileInfo.innerText = "No file selected";
+            }
+        });
+        function showToast(message, type = "success") {
+            const toast = document.createElement("div");
+            toast.innerText = message;
+            toast.style.position = "fixed";
+            toast.style.bottom = "20px";
+            toast.style.right = "20px";
+            toast.style.padding = "12px 18px";
+            toast.style.borderRadius = "8px";
+            toast.style.color = "#fff";
+            toast.style.fontSize = "14px";
+            toast.style.zIndex = "9999";
+            toast.style.boxShadow = "0 0 10px rgba(0,0,0,0.3)";
+            toast.style.transition = "0.3s";
+            if (type === "success") {
+                toast.style.background = "#22c55e";
+            } else {
+                toast.style.background = "#ef4444";
+            }
+            document.body.appendChild(toast);
+            setTimeout(() => {
+                toast.style.opacity = "0";
+                toast.style.transform = "translateY(10px)";
+            }, 2500);
+            setTimeout(() => {
+                toast.remove();
+            }, 3000);
+        }
+        async function submitResume() {
+            const file = fileInput.files[0];
+            const content =
+                document.getElementById("content").value;
+            if (!file) {
+                showToast(
+                    "Please upload a PDF file",
+                    "error"
+                );
+                return;
+            }
+            status.innerText = "Processing resume...";
+            const formData = new FormData();
+            formData.append("file", file);
+            formData.append("content", content);
+            try {
+                const res = await fetch(
+                    "/api/airesumeanalyzer/check",
+                    {
+                        method: "POST",
+                        body: formData
+                    }
+                );
+                const data = await res.json();
+                console.log(data);
+                if (!data.status || !data.path) {
+                    throw new Error(
+                        data.errors?.[0] ||
+                        "PDF generation failed"
+                    );
+                }
+                const pdfResponse = await fetch(data.path);
+                const blob = await pdfResponse.blob();
+                const blobUrl =
+                    window.URL.createObjectURL(blob);
+                const link =
+                    document.createElement("a");
+                link.href = blobUrl;
+                link.download = "updated_resume.pdf";
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+                window.URL.revokeObjectURL(blobUrl);
+                status.innerText = "";
+                showToast(
+                    "Resume downloaded successfully!",
+                    "success"
+                );
+            } catch (err) {
+                console.error(err);
+                status.innerText = "";
+                showToast(
+                    err.message ||
+                    "Error processing resume",
+                    "error"
+                );
+            }
+        }
+    </script>
+
+
+</body>
+
+</html>
