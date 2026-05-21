@@ -8,7 +8,7 @@ class PdfHelper {
         return new Promise((resolve, reject) => {
             try {
                 const dir = path.join(
-                    process.cwd(),
+                    "/tmp",
                     "generated"
                 );
                 if (!fs.existsSync(dir)) {
