@@ -13,7 +13,7 @@ An AI-powered Resume Analyzer that helps job seekers evaluate, improve, and opti
 - 📊 Resume Score Generation
 - 💡 Personalized Improvement Suggestions
 - 🎯 ATS-Friendly Recommendations
-- 🛠 Skill Extraction
+- 🛠 Skill Extraction 
 - 📑 Download Analysis Report as PDF
 - ⚡ Fast and Responsive UI
 
